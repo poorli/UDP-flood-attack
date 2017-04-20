@@ -67,9 +67,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="arp.h" />
+    <ClInclude Include="icmp.h" />
+    <ClInclude Include="icmpSimple.h" />
     <ClInclude Include="includes.h" />
     <ClInclude Include="NetworkStuff.h" />
     <ClInclude Include="RawPacket.h" />
+    <ClInclude Include="udpScan.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="udp.cpp" />

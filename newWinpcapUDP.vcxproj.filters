@@ -24,6 +24,18 @@
     <ClInclude Include="RawPacket.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="arp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="icmp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="udpScan.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="icmpSimple.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="udp.cpp">
