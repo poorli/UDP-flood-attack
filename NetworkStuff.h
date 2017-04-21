@@ -90,6 +90,7 @@ DeviceInfo GetAdapterInfo(pcap_if_t* Device)
 			//if (SendARP(DevInfo.DefaultGateway, NULL, (void*)DevInfo.GatewayPhysicalAddress, &MACSize) != NO_ERROR){
 			//	cout << "SendARP Failed. No default gateway\n"; 
 			//}
+
 			//count();
 			//count << DeviceInfo.GatewayPhysicalAddress;
 			//DeviceInfo.GatewayPhysicalAddress = (void*)"70:7b:e8:c1:ab:69";

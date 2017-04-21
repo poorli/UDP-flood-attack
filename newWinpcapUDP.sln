@@ -17,6 +17,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RecieveICMP", "..\RecieveAC
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DateTypeLearn", "..\DateTypeLearn\DateTypeLearn.vcxproj", "{ADB6B53D-ABAC-462B-958D-86C93B47F3AC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SendARP", "..\SendARP\SendARP.vcxproj", "{07ED7E3D-32C6-403F-8DFA-D35C7BF7C52D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SendICMP", "..\SendICMP\SendICMP.vcxproj", "{EE8DB812-943E-4F87-A37C-892B3C59D689}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -51,6 +55,14 @@ Global
 		{ADB6B53D-ABAC-462B-958D-86C93B47F3AC}.Debug|Win32.Build.0 = Debug|Win32
 		{ADB6B53D-ABAC-462B-958D-86C93B47F3AC}.Release|Win32.ActiveCfg = Release|Win32
 		{ADB6B53D-ABAC-462B-958D-86C93B47F3AC}.Release|Win32.Build.0 = Release|Win32
+		{07ED7E3D-32C6-403F-8DFA-D35C7BF7C52D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{07ED7E3D-32C6-403F-8DFA-D35C7BF7C52D}.Debug|Win32.Build.0 = Debug|Win32
+		{07ED7E3D-32C6-403F-8DFA-D35C7BF7C52D}.Release|Win32.ActiveCfg = Release|Win32
+		{07ED7E3D-32C6-403F-8DFA-D35C7BF7C52D}.Release|Win32.Build.0 = Release|Win32
+		{EE8DB812-943E-4F87-A37C-892B3C59D689}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EE8DB812-943E-4F87-A37C-892B3C59D689}.Debug|Win32.Build.0 = Debug|Win32
+		{EE8DB812-943E-4F87-A37C-892B3C59D689}.Release|Win32.ActiveCfg = Release|Win32
+		{EE8DB812-943E-4F87-A37C-892B3C59D689}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

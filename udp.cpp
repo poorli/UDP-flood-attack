@@ -3,6 +3,7 @@
 //#include "icmp.h"
 
 #include "udpScan.h"
+#include "arp.h"
 
 #include <ctime>
 
@@ -35,12 +36,13 @@ pcap_if_t* ChosenDevice;
 int main()
 {
 	ShowDeviceList();
-	cout << "Enter the number of your device (example: 2)" << endl;
+	cout << "选择网关：" << endl;
 	
 	int chosen;
 	//cin >> chosen;
-	chosen = 1;
+	chosen = 3;
 	//chosen = 1;
+	//chosen = 2;
 
 	int i = 1; char Error[PCAP_ERRBUF_SIZE];
 	pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &ChosenDevice, Error);
@@ -68,7 +70,7 @@ int main()
 	ICMP->device = ChosenDevice;
 
 
-	HANDLE hThread_icmp = CreateThread(NULL, 0, getICMP, ICMP, 0, NULL);
+	//HANDLE hThread_icmp = CreateThread(NULL, 0, getICMP, ICMP, 0, NULL);
 
 	cout << "You chose: " << ChosenDevice->name << endl;
 
@@ -81,12 +83,13 @@ int main()
 
 	char DataString[2048];
 	//strcpy_s(SourceIP, "-1");
-	//strcpy_s(SourceIP, "10.26.32.23");
-	//strcpy_s(SourceIP, "10.21.8.73");
-	strcpy_s(SourceIP, "10.26.30.193");
+	//strcpy_s(SourceIP, "124.207.89.110");
+	//strcpy_s(SourceIP, "10.26.30.193");
+	strcpy_s(SourceIP, "192.168.155.1");
 	strcpy_s(SourcePort, "56921");
 	strcpy_s(SourceMAC, "-1");
-	strcpy_s(DestinationIP, "123.206.80.223");
+	//strcpy_s(DestinationIP, "123.206.80.223");
+	strcpy_s(DestinationIP, "192.168.155.3");
 	//strcpy_s(DestinationIP, "123.206.80.225");
 	//strcpy_s(DestinationIP, "255.255.255.255");
 	//strcpy_s(DestinationIP, "192.168.0.1");
@@ -94,13 +97,31 @@ int main()
 	//strcpy_s(DestinationIP, "127.0.0.1");
 	strcpy_s(DestinationPort, "8888");
 	strcpy_s(DataString, "hello");
+	//ULONG *MacAddr = new ULONG[2];
+	
 	unsigned char desMAC[6];
-	desMAC[0] = 0x58;
-	desMAC[1] = 0x97;
-	desMAC[2] = 0xbd;
-	desMAC[3] = 0x5b;
-	desMAC[4] = 0x4b;
-	desMAC[5] = 0x80;
+	getMAC(SourceIP, DestinationIP);
+	BYTE *bPhysAddr;
+	bPhysAddr = (BYTE *)&MacAddr;
+	for (i = 0; i < (int)6; i++) {
+		desMAC[i] = (int)bPhysAddr[i];
+	}
+	//desMAC[0] = 0x58;
+	//desMAC[1] = 0x97;
+	//desMAC[2] = 0xbd;
+	//desMAC[3] = 0x5b;
+	//desMAC[4] = 0x4b;
+	//desMAC[5] = 0x80;
+	
+
+	//desMAC[0] = 0x70;
+	//desMAC[1] = 0x18;
+	//desMAC[2] = 0x8B;
+	//desMAC[3] = 0x08;
+	//desMAC[4] = 0xEE;
+	//desMAC[5] = 0xFB;
+
+
 
 	ThreadParamStruct *udpScanData = new ThreadParamStruct();
 	udpScanData->ChosenDevice = ChosenDevice;
@@ -151,7 +172,8 @@ int main()
 	time_t startTime = time(0), endTime;
 	canSend = true;
 	sendPort = 8880;
-	while (true)
+	//端口检测
+	while (false)
 	{
 		endTime = time(0);
 		if (endTime - startTime > 3)
@@ -206,20 +228,23 @@ int main()
 			break;
 		}
 	}
-	for (size_t i = 0; i < 20; i++)
+	strcpy_s(udpScanData->DestinationPort, "8888");
+	strcpy_s(udpScanData->DataString, "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello");
+	//udpScanData->DataString = "hello";
+	for (size_t i = 0; i < 10; i++)
 	{
 		//if (i % 4 ==0)
 		//{
 		//	HANDLE hThread_icmp = CreateThread(NULL, 0, getICMP, ICMP, 0, NULL);
 			//Sleep(200);
 		//}
-		/*stream << i;
-		stream >> DestinationPort;
-		stream.clear();
-		strcpy_s(udpScanData->DestinationPort, DestinationPort);
-		cout << DestinationPort<<endl;*/
+		//stream << i;
+		//stream >> DestinationPort;
+		//stream.clear();
+		//strcpy_s(udpScanData->DestinationPort, DestinationPort);
+		cout << DestinationPort<<endl;
 
-		//HANDLE hThread_udpScan = CreateThread(NULL, 0, udpScan, udpScanData, 0, NULL);
+		HANDLE hThread_udpScan = CreateThread(NULL, 0, udpScan, udpScanData, 0, NULL);
 
 		//扫描端口时，只需要改变端口地址
 

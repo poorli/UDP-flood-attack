@@ -12,40 +12,28 @@ using namespace std;
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
-
-int getMAC()
+ULONG MacAddr[2];       /* for 6-byte hardware addresses */
+void getMAC(char* SrcIpString, char* DestIpString)
 {
 	DWORD dwRetVal;
-	IPAddr DestIp = 0;
-	IPAddr SrcIp = 0;       /* default for src ip */
-	ULONG MacAddr[2];       /* for 6-byte hardware addresses */
+	IPAddr SrcIp = inet_addr(SrcIpString);
+	IPAddr DestIp = inet_addr(DestIpString);
+    //ULONG MacAddr[2];       /* for 6-byte hardware addresses */
 	ULONG PhysAddrLen = 6;  /* default to length of six bytes */
-
-	char *DestIpString = NULL;
-	char *SrcIpString = NULL;
 
 	BYTE *bPhysAddr;
 	unsigned int i;
-	//SrcIpString = "10.26.30.193";
-	SrcIpString = "10.26.30.193";
-	//SrcIpString = "192.168.0.1";
-	SrcIp = inet_addr(SrcIpString);
-	DestIpString = "123.206.80.223";
-	//DestIpString = "111.13.101.208";
-
-	DestIp = inet_addr(DestIpString);
-
 	memset(&MacAddr, 0xff, sizeof (MacAddr));
 
-	printf("Sending ARP request for IP address: %s\n", DestIpString);
+	printf("根据ARP协议获取主机MAC地址: %s\n", DestIpString);
 
 	dwRetVal = SendARP(DestIp, SrcIp, &MacAddr, &PhysAddrLen);
-	cout << MacAddr << endl;
+	//cout << MacAddr << endl;
 
-	cout << PhysAddrLen << endl;
+	//cout << PhysAddrLen << endl;
 	if (dwRetVal == NO_ERROR) {
-		//cout << "a" << endl;
-		bPhysAddr = (BYTE *)& MacAddr;
+		cout << "主机MAC地址为：";
+		bPhysAddr = (BYTE *) &MacAddr;
 		//cout <<"bphysAddr:"<< bPhysAddr << endl;
 		if (PhysAddrLen) {
 			for (i = 0; i < (int)PhysAddrLen; i++) {
@@ -86,5 +74,5 @@ int getMAC()
 			break;
 		}
 	}
-	system("pause");
+	//return MacAddr[2];
 }
