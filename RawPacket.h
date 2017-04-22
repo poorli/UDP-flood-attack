@@ -90,6 +90,7 @@ unsigned short RawPacket::CalculateIPChecksum(UINT TotalLen, UINT ID, UINT Sourc
 	CheckSum = ~CheckSum;
 	return CheckSum;
 }
+
 unsigned short RawPacket::CalculateUDPChecksum(unsigned char* UserData, int UserDataLen, UINT SourceIP, UINT DestIP, USHORT SourcePort, USHORT DestinationPort, UCHAR Protocol)
 {
 	unsigned short CheckSum = 0;
@@ -125,6 +126,7 @@ unsigned short RawPacket::CalculateUDPChecksum(unsigned char* UserData, int User
 	CheckSum = ~CheckSum; //One's complement
 	return CheckSum;
 }
+
 void RawPacket::SendPacket(pcap_if_t* Device)
 {
 	char Error[256];

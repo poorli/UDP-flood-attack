@@ -111,7 +111,4 @@ DeviceInfo GetAdapterInfo(pcap_if_t* Device)
 	DevInfo.Exists = false;
 	return DevInfo;
 }
-
-
-
 #endif

@@ -5,8 +5,8 @@
 
 #include <iostream>
 using namespace std;
-bool canSend;
 
+bool canSend;
 int sendPort;
 /* 4 bytes IP address */
 typedef struct ip_address{
@@ -50,6 +50,7 @@ struct ThreadICMP
 	int receivePort;
 };
 
+void getSimpleICMP(pcap_if_t *device);
 static DWORD WINAPI getICMP(LPVOID lpParameter);
 
 DWORD WINAPI getICMP(LPVOID lpParameter)
@@ -61,27 +62,9 @@ DWORD WINAPI getICMP(LPVOID lpParameter)
 	pcap_t *adhandle;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	u_int netmask;
-	//char packet_filter[] = "icmp and udp";
-	////char packet_filter[] = "ip src host 123.206.80.255";
 	char packet_filter[] = "icmp[icmptype] == icmp-unreach";
 
-	//char packet_filter[] = "udp";
-	//char packet_filter[] = "host 123.206.80.223";
-
 	struct bpf_program fcode;
-
-	/* Retrieve the device list */
-
-
-	/* Print the list */
-
-
-	/* Jump to the selected adapter */
-	//for (d = alldevs, i = 0; i< inum - 1; d = d->next, i++);
-
-	/* Open the adapter */
-	//for (d = alldevs, i = 0; i < inum - 1; d = d->next, i++);
-
 	/* Open the adapter */
 	/*lpParameter->device*/
 	if ((adhandle = pcap_open(device->name,  // name of the device
@@ -94,17 +77,12 @@ DWORD WINAPI getICMP(LPVOID lpParameter)
 		)) == NULL)
 	{
 		fprintf(stderr, "\nUnable to open the adapter. %s is not supported by WinPcap\n");
-		/* Free the device list */
-		//pcap_freealldevs(alldevs);
 	}
 
 	/* Check the link layer. We support only Ethernet for simplicity. */
 	if (pcap_datalink(adhandle) != DLT_EN10MB)
 	{
 		fprintf(stderr, "\nThis program works only on Ethernet networks.\n");
-		/* Free the device list */
-		//pcap_freealldevs(alldevs);
-		//return -1;
 	}
 
 	if (device->addresses != NULL)
@@ -119,32 +97,18 @@ DWORD WINAPI getICMP(LPVOID lpParameter)
 	if (pcap_compile(adhandle, &fcode, packet_filter, 1, netmask) <0)
 	{
 		fprintf(stderr, "\nUnable to compile the packet filter. Check the syntax.\n");
-		/* Free the device list */
-		//pcap_freealldevs(alldevs);
-		//return -1;
 	}
 
 	//set the filter
 	if (pcap_setfilter(adhandle, &fcode)<0)
 	{
 		fprintf(stderr, "\nError setting the filter.\n");
-		/* Free the device list */
-		//pcap_freealldevs(alldevs);
-		//return -1;
 	}
-
-	//printf("\nlistening on %s...\n", d->description);
-
-	/* At this point, we don't need any more the device list. Free it */
-	//pcap_freealldevs(alldevs);
 
 	/* start the capture */
 	pcap_loop(adhandle, 0, packet_handler, NULL);
 	return 0;
 }
-
-
-void getSimpleICMP(pcap_if_t *device);
 
 void getSimpleICMP(pcap_if_t *device)
 {
@@ -261,9 +225,13 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 	sport = ntohs(uh->sport);
 	dport = ntohs(uh->dport);
 
-	cout << ih->daddr.byte1 << endl;
-	cout << uh->sport << endl;
-	cout << uh->dport << endl;
+	//cout << ih->daddr.byte1 << endl;
+	//cout << uh->sport << endl;
+	//cout << uh->dport << endl;
+	if (dport == 8888)
+	{
+		return;
+	}
 	/* print ip addresses and udp ports */
 	printf("%d.%d.%d.%d.%d -> %d.%d.%d.%d.%d\n",
 		ih->saddr.byte1,
@@ -279,6 +247,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 	//PORT_SCAN[1] = 1;
 	portScan[dport] = 1;
 	//
+	cout << endl;
 	if (dport == sendPort)
 	{
 		canSend = true;

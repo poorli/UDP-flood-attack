@@ -13,7 +13,7 @@ using namespace std;
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 ULONG MacAddr[2];       /* for 6-byte hardware addresses */
-void getMAC(char* SrcIpString, char* DestIpString)
+bool getMAC(char* SrcIpString, char* DestIpString)
 {
 	DWORD dwRetVal;
 	IPAddr SrcIp = inet_addr(SrcIpString);
@@ -46,6 +46,7 @@ void getMAC(char* SrcIpString, char* DestIpString)
 		else
 			printf
 			("Warning: SendArp completed successfully, but returned length=0\n");
+		return TRUE;
 
 	}
 	else {
@@ -73,6 +74,6 @@ void getMAC(char* SrcIpString, char* DestIpString)
 			printf("\n");
 			break;
 		}
+		return FALSE;
 	}
-	//return MacAddr[2];
 }
