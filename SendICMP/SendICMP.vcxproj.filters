@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sendICMP.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ping.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

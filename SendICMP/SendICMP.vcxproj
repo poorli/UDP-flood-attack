@@ -67,7 +67,6 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ping.cpp" />
-    <ClCompile Include="sendICMP.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ping.h" />

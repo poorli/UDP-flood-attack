@@ -1,9 +1,9 @@
 #include "ping.h"
-#include <iostream>
-#include <map>
 
 USHORT CPing::s_usPacketSeq = 0;
-map <string, int> hostScan;
+
+map <string, int> hostScanStatus;
+map <string, int> scanStatus;
 
 CPing::CPing() :m_szICMPData(NULL), m_bIsInitSucc(FALSE)
 {
@@ -67,8 +67,10 @@ BOOL CPing::Ping(DWORD dwDestIP, PingReply *pPingReply, DWORD dwTimeout)
 
 BOOL CPing::Ping(char *szDestIP, PingReply *pPingReply, DWORD dwTimeout)
 {
+	
 	if (NULL != szDestIP)
 	{
+		
 		return PingCore(inet_addr(szDestIP), pPingReply, dwTimeout);
 	}
 	return FALSE;
@@ -81,7 +83,6 @@ BOOL CPing::PingCore(DWORD dwDestIP, PingReply *pPingReply, DWORD dwTimeout)
 	{
 		return FALSE;
 	}
-
 	//配置SOCKET
 	sockaddr_in sockaddrDest;
 	sockaddrDest.sin_family = AF_INET;
@@ -109,6 +110,16 @@ BOOL CPing::PingCore(DWORD dwDestIP, PingReply *pPingReply, DWORD dwTimeout)
 	}
 	char* some;
 	some = inet_ntoa(sockaddrDest.sin_addr);
+	//map<int, int>::iterator tempMap;
+	if (scanStatus.find(some) == scanStatus.end())
+	{
+		scanStatus[some] = 1;
+	}
+	else
+	{
+		scanStatus[some]++;
+	}
+	//scanStatus[some] = 
 	//判断是否需要接收相应报文
 	if (pPingReply == NULL)
 	{
@@ -140,11 +151,10 @@ BOOL CPing::PingCore(DWORD dwDestIP, PingReply *pPingReply, DWORD dwTimeout)
 						)
 					{
 						
-
-						hostScan[some] = 1;
 						//cout << recvbuf << endl;
-						cout << some;
-						cout << "ping success!" << pIPHeader->m_ulDestIP<<endl;
+						//cout << some;
+						hostScanStatus[some] = 1;
+						cout << "ping success!" << some << endl;
 						pPingReply->m_usSeq = usSeq;
 						pPingReply->m_dwRoundTripTime = nRecvTimestamp - pICMPHeader->m_ulTimeStamp;
 						pPingReply->m_dwBytes = nPacketSize - usIPHeaderLen - sizeof(ICMPHeader);

@@ -2,7 +2,6 @@
 #define _INCLUDES_H
 //#define WIN32
 
-
 #include <winsock2.h> // htons() htonl() and other helper functions
 #pragma comment (lib,"WS2_32.lib") 
 #include <windows.h> 

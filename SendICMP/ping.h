@@ -12,15 +12,23 @@
 
 #include <winsock2.h>
 #include <iphlpapi.h>
+
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <iostream>
+#include <stdio.h>
 using namespace std;
 
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
+#include <windows.h> 
+
+#include <map>
+#include <string>
+#include <string.h>
+extern map <string, int> hostScanStatus;
+extern map <string, int> scanStatus;
 
 #define DEF_PACKET_SIZE 32
 #define ECHO_REQUEST 8
@@ -64,7 +72,7 @@ public:
 	CPing();
 	~CPing();
 	BOOL Ping(DWORD dwDestIP, PingReply *pPingReply = NULL, DWORD dwTimeout = 2000);
-	BOOL Ping(char *szDestIP, PingReply *pPingReply = NULL, DWORD dwTimeout = 200);
+	BOOL Ping(char *szDestIP, PingReply *pPingReply = NULL, DWORD dwTimeout = 100);
 private:
 	BOOL PingCore(DWORD dwDestIP, PingReply *pPingReply, DWORD dwTimeout);
 	USHORT CalCheckSum(USHORT *pBuffer, int nSize);
@@ -78,3 +86,4 @@ private:
 private:
 	static USHORT s_usPacketSeq;
 };
+
