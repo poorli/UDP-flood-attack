@@ -20,7 +20,7 @@ struct ThreadParamStruct
 
 };
 
-static DWORD WINAPI udpScan(LPVOID lpParameter);
+extern DWORD WINAPI udpScan(LPVOID lpParameter);
 
 DWORD WINAPI udpScan(LPVOID lpParameter)
 {

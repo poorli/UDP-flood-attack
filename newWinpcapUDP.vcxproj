@@ -72,10 +72,12 @@
     <ClInclude Include="icmpSimple.h" />
     <ClInclude Include="includes.h" />
     <ClInclude Include="NetworkStuff.h" />
+    <ClInclude Include="ping.h" />
     <ClInclude Include="RawPacket.h" />
     <ClInclude Include="udpScan.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ping.cpp" />
     <ClCompile Include="udp.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -57,7 +57,7 @@ DWORD WINAPI getICMP(LPVOID lpParameter)
 {
 	ThreadICMP* Device = (ThreadICMP*)lpParameter;
 	pcap_if_t *device = Device->device;
-	int inum;
+	//int inum;
 	int i = 0;
 	pcap_t *adhandle;
 	char errbuf[PCAP_ERRBUF_SIZE];

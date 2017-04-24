@@ -36,9 +36,15 @@
     <ClInclude Include="icmpSimple.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ping.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="udp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ping.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

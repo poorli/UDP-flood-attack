@@ -1,6 +1,7 @@
 #include "udpScan.h"
 #include "arp.h"
 #include <ctime>
+#include "ping.h"
 
 pcap_if_t* ChosenDevice;//选择的网卡
 //char SourceIP[16];
@@ -25,6 +26,17 @@ pcap_if_t* ChosenDevice;//选择的网卡
 //strcpy_s(DestinationPort, "8888");
 //strcpy_s(DataString, "hello");
 //unsigned char desMAC[6];
+int hostThreadScanTimes = 0;
+int hostScanStartPort;
+int hostScanEndPort;
+struct sendICMPStruct
+{
+	int startScanIP;
+	int endIP;
+};
+char sendIPsub[20] = "";
+
+DWORD WINAPI hostScan(LPVOID lpParameter);
 
 int main()
 {
@@ -53,7 +65,149 @@ int main()
 	}
 	cout << "选择网卡为： " << ChosenDevice->name << endl;
 
+	CPing objPing;
+	PingReply reply;
+	/*char startIP[] = "123.206.80.223.1";
+	char endIP[] = "192.168.155.255";*/
+	//char startIP[] = "123.206.80.223.1";
+	//char endIP[] = "123.206.80.223.255"
+	char startIP[40];
+	char endIP[40];
+	cout << "主机扫描" << endl;
+	cout << "起始IP：";
+	cin >> startIP;
+	cout << "终点IP：";
+	cin >> endIP;
+	//处理IP地址
+	char *strDelim = ".";
+	char seps[] = ".";
+	char *token1 = NULL;
+	char *token2 = NULL;
+	char *lastToken1 = NULL;
+	int tokenArr1[4];
+	int tokenArr2[4];
+	char *lastToken2 = NULL;
+	char *next_token1 = NULL;
+	char *next_token2 = NULL;
 
+	token1 = strtok_s(startIP, seps, &next_token1);
+	token2 = strtok_s(endIP, seps, &next_token2);
+	i = 0;
+	int j = 0;
+
+	while ((token1 != NULL) || (token2 != NULL))
+	{
+		if (token1 != NULL)
+		{
+			tokenArr1[i] = atoi(token1);
+			i++;
+			lastToken1 = token1;
+			token1 = strtok_s(NULL, seps, &next_token1);
+
+		}
+		if (token2 != NULL)
+		{
+			tokenArr2[j] = atoi(token2);
+			j++;
+			lastToken2 = token2;
+			token2 = strtok_s(NULL, seps, &next_token2);
+		}
+	}
+	//初始化扫描IP起始只和终点值
+	hostScanStartPort = atoi(lastToken1);
+	hostScanEndPort = atoi(lastToken2);
+
+	char sendIP[40] = "";
+	char tempStr[4] = "";
+	memset(sendIP, 0, sizeof(sendIP));
+	memset(tempStr, 0, sizeof(tempStr));
+
+	//获取网段前缀
+	for (i = 0; i < 3; i++)
+	{
+		_itoa_s(tokenArr1[i], tempStr, 4, 10);
+		strcat_s(sendIPsub, sizeof(sendIPsub)+sizeof(tempStr)+sizeof("\0"), tempStr);
+		strcat_s(sendIPsub, sizeof(sendIPsub)+sizeof(tempStr)+sizeof("\0"), ".");
+	}
+
+	//分段扫描主机，step为每个线程扫描主机数，可调整优化扫描时间
+	int step = 10;
+	int threadCount = 0;
+	HANDLE *hThread;
+	hThread = NULL;
+	//time_t startTime = time(0), endTime;
+	cout << "开始主机扫描：" << endl;
+	for (int i = 1; i < hostScanEndPort; i = i + step)
+	{
+		sendICMPStruct *icmpData = new sendICMPStruct();
+		icmpData->startScanIP = i;
+
+		if (i + step > hostScanEndPort)
+		{
+			icmpData->endIP = hostScanEndPort;
+		}
+		else {
+			icmpData->endIP = i + step;
+		}
+
+		DWORD dwThreadId;
+		hThread = (HANDLE *)realloc(hThread, sizeof(HANDLE)*threadCount);
+		hThread[threadCount] = CreateThread(NULL, 0, hostScan, icmpData, NULL, &dwThreadId);
+
+		threadCount++;
+		Sleep(10);
+	}
+	//最后一次处理
+	_itoa_s(hostScanEndPort, tempStr, 4, 10);
+	strcat_s(sendIP, sizeof(sendIP)+sizeof(sendIPsub)+sizeof("\0"), sendIPsub);
+	strcat_s(sendIP, sizeof(sendIP)+sizeof(tempStr)+sizeof("\0"), tempStr);
+	objPing.Ping(sendIP, &reply);
+	//endTime = time(0);
+	WaitForMultipleObjects(threadCount, hThread, TRUE, INFINITE);
+
+	//主线程等待所有主机扫描线程结束
+	while (true){
+		if (hostThreadScanTimes == hostScanEndPort - 1)
+		{
+			break;
+		}
+	}
+
+	cout << "主机扫描结果：" << endl;
+	//map<string, int>::iterator tempMap;
+	strcpy_s(sendIP, "");
+	for (int i = hostScanStartPort; i <= hostScanEndPort; i++)
+	{
+		_itoa_s(i, tempStr, 4, 10);
+		strcat_s(sendIP, sizeof(sendIP)+sizeof(sendIPsub)+sizeof("\0"), sendIPsub);
+		strcat_s(sendIP, sizeof(sendIP)+sizeof(tempStr)+sizeof("\0"), tempStr);
+		if (existHostMap.find(sendIP) != existHostMap.end())
+		{
+			cout << sendIP << "	开放" << endl;
+		}
+		strcpy_s(sendIP, "");
+	}
+
+	char choicedScanIP[20];
+	cout << "选择主机IP：";
+
+	while (true)
+	{
+		cin >> choicedScanIP;
+		if (existHostMap.find(choicedScanIP) != existHostMap.end())
+		{
+			cout << "选择主机IP为：" << choicedScanIP << endl;
+			break;
+		}
+		else
+		{
+			cout << "该主机未开放，重新选择端口：";
+		}
+	}
+
+	//cout << endTime - startTime << endl;
+	cout << "end" << endl;
+	cout << "扫描次数为：" << hostThreadScanTimes << endl;
 	//desMAC[0] = 0x58;
 	//desMAC[1] = 0x97;
 	//desMAC[2] = 0xbd;
@@ -273,3 +427,21 @@ int main()
 	system("pause");
 }
 //拿MAC地址，扫描，多线程？
+DWORD WINAPI hostScan(LPVOID lpParameter) {
+	CPing objPing;
+	sendICMPStruct *data = new sendICMPStruct();
+	data = (sendICMPStruct*)lpParameter;
+	for (int i = data->startScanIP; i < data->endIP; i++)
+	{
+		PingReply reply;
+		char sendIP[20] = "";
+		char tempStr[4] = "";
+		_itoa_s(i, tempStr, 4, 10);
+		strcat_s(sendIP, 20, sendIPsub);
+		strcat_s(sendIP, 20, tempStr);
+		objPing.Ping(sendIP, &reply);
+		hostThreadScanTimes++;
+		strcpy_s(sendIP, "");
+	}
+	return 0;
+}
