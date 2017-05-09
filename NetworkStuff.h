@@ -5,6 +5,7 @@
 
 #include "Includes.h"
 
+pcap_if_t* ChosenDevice;
 struct  DeviceInfo
 {
 	bool Exists;
@@ -37,13 +38,16 @@ unsigned int BytesTo32(unsigned char W, unsigned char X, unsigned char Y, unsign
 
 void ShowDeviceList(void)
 {
+
 	char Error[PCAP_ERRBUF_SIZE];
-	pcap_if_t* Devices; pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &Devices, Error);
+	pcap_if_t* Devices; 
+	pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &Devices, Error);
 	int i = 1;
+	cout << "Íø¹ØÁÐ±í£º" << endl;
 	for (pcap_if_t* CurrentDevice = Devices; CurrentDevice != NULL; CurrentDevice = CurrentDevice->next)
 	{
-		cout << i << "description:" << CurrentDevice->description << endl;
-		cout << inet_addr("10.26.30.193") << endl;
+		cout << i << ":" << CurrentDevice->description << endl;
+		//cout << inet_addr("10.26.30.193") << endl;
 		i++;
 	}
 }
@@ -110,5 +114,20 @@ DeviceInfo GetAdapterInfo(pcap_if_t* Device)
 	}
 	DevInfo.Exists = false;
 	return DevInfo;
+}
+
+void getChoicedDevice(int chosen) {
+	int i = 1;
+	char Error[PCAP_ERRBUF_SIZE];
+	pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &ChosenDevice, Error);
+	for (pcap_if_t* CurrentDevice = ChosenDevice; CurrentDevice != NULL; CurrentDevice = CurrentDevice->next)
+	{
+		if (i == chosen)
+		{
+			ChosenDevice = CurrentDevice;
+			break;
+		}
+		i++;
+	}
 }
 #endif

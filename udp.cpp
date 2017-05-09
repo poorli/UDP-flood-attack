@@ -3,7 +3,7 @@
 #include <ctime>
 #include "ping.h"
 
-pcap_if_t* ChosenDevice;//选择的网卡
+//选择的网卡
 //char SourceIP[16];
 //char SourcePort[6];
 //char SourceMAC[19];
@@ -44,17 +44,7 @@ int main()
 	cout << "选择网关：" << endl;
 	int chosen;
 	cin >> chosen;
-	int i = 1; char Error[PCAP_ERRBUF_SIZE];
-	pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &ChosenDevice, Error);
-	for (pcap_if_t* CurrentDevice = ChosenDevice; CurrentDevice != NULL; CurrentDevice = CurrentDevice->next)
-	{
-		if (i == chosen)
-		{
-			ChosenDevice = CurrentDevice;
-			break;
-		}
-		i++;
-	}
+	getChoicedDevice(chosen);
 	//di为本地网卡信息
 	DeviceInfo di;
 	di = GetAdapterInfo(ChosenDevice);
@@ -92,7 +82,7 @@ int main()
 
 	token1 = strtok_s(startIP, seps, &next_token1);
 	token2 = strtok_s(endIP, seps, &next_token2);
-	i = 0;
+	int i = 0;
 	int j = 0;
 
 	while ((token1 != NULL) || (token2 != NULL))
@@ -206,8 +196,8 @@ int main()
 	}
 
 	//cout << endTime - startTime << endl;
-	cout << "end" << endl;
-	cout << "扫描次数为：" << hostThreadScanTimes << endl;
+	//cout << "end" << endl;
+	//cout << "扫描次数为：" << hostThreadScanTimes << endl;
 	//desMAC[0] = 0x58;
 	//desMAC[1] = 0x97;
 	//desMAC[2] = 0xbd;
@@ -240,7 +230,7 @@ int main()
 
 	unsigned char desMAC[6];
 	//获取MAC地址存入全局变量ULONG MacAddr[2]中
-	cout << "输入IP地址（如192.168.xxx.xxx）：";
+	//cout << "输入IP地址（如192.168.xxx.xxx）：";
 	while (true)
 	{
 		cin >> DestinationIP;
