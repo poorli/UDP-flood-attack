@@ -308,5 +308,365 @@ unsigned int   DestinationIP,
 unsigned short SourcePort,
 unsigned short DestinationPort,
 unsigned char* UserData,
-unsigned int   DataLen);
-unsigned int UserDataLen;
+unsigned int   DataLen
+
+SendPacket
+pcap_if_t* Device
+
+void getChoicedDevice(int chosen) {
+	int i = 1;
+	char Error[PCAP_ERRBUF_SIZE];
+	pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &ChosenDevice, Error);
+	for (pcap_if_t* CurrentDevice = ChosenDevice; CurrentDevice != NULL; CurrentDevice = CurrentDevice->next)
+	{
+		if (i == chosen)
+		{
+			ChosenDevice = CurrentDevice;
+			break;
+		}
+		i++;
+	}
+}
+
+DeviceInfo GetAdapterInfo(pcap_if_t* Device)
+{
+	DeviceInfo DevInfo;
+	ZeroMemory(&DevInfo, sizeof(DevInfo));
+
+	IP_ADAPTER_INFO* AdapterInfo = new IP_ADAPTER_INFO[48];
+	ULONG AIS = sizeof(IP_ADAPTER_INFO)* 48;
+
+	GetAdaptersInfo(AdapterInfo, &AIS);
+
+	for (IP_ADAPTER_INFO* Current = AdapterInfo; Current != NULL; Current = Current->Next)
+	{
+		if (strstr(Device->name, Current->AdapterName) != 0)
+
+		{
+			cout << Device->addresses->addr->sa_data << endl;
+			DevInfo.IP = BytesTo32(Device->addresses->addr->sa_data[2], Device->addresses->addr->sa_data[3],
+				Device->addresses->addr->sa_data[4], Device->addresses->addr->sa_data[5]);
+
+			DevInfo.DefaultGateway = inet_addr(Current->GatewayList.IpAddress.String);	// DevInfo.DefaultGateway
+
+			DevInfo.IP = inet_addr(Current->IpAddressList.IpAddress.String); //DevInfo.IP
+			
+			memcpy((void*)DevInfo.PhysicalAddress, (void*)(Current->Address), 6); //DevInfo.PhysicalAddress
+			ULONG MACSize = 6;
+			DevInfo.Exists = true;
+			return DevInfo;
+		}
+	}
+	DevInfo.Exists = false;
+	return DevInfo;
+}
+pcap_open
+
+WinPcap和Libpcap的最强大的特性之一，是拥有过滤数据包的引擎。 它提供了有效的方法去获取网络中的某些数据包，这也是WinPcap捕获机制中的一个组成部分。 用来过滤数据包的函数是 pcap_compile() 和 pcap_setfilter() 。
+pcap_compile() 它将一个高层的布尔过滤表达式编译成一个能够被过滤引擎所解释的低层的字节码。有关布尔过滤表达式的语法可以参见 Filtering expression syntax 这一节的内容。
+
+pcap_setfilter() 将一个过滤器与内核捕获会话向关联。当 pcap_setfilter() 被调用时，这个过滤器将被应用到来自网络的所有数据包，并且，所有的符合要求的数据包 (即那些经过过滤器以后，布尔表达式为真的包) ，将会立即复制给应用程序。
+
+以下代码展示了如何编译并设置过滤器。 请注意，我们必须从 pcap_if 结构体中获得掩码，因为一些使用 pcap_compile() 创建的过滤器需要它。
+
+在这段代码片断中，传递给 pcap_compile() 的过滤器是"ip and tcp"，这说明我们只希望保留IPv4和TCP的数据包，并把他们发送给应用程序。
+pcap_loop()
+packet_handler
+DWORD WINAPI getICMP(LPVOID lpParameter)
+{
+	ThreadICMP* Device = (ThreadICMP*)lpParameter;
+	pcap_if_t *device = Device->device;
+	//int inum;
+	int i = 0;
+	pcap_t *adhandle;
+	char errbuf[PCAP_ERRBUF_SIZE];
+	u_int netmask;
+	char packet_filter[] = "icmp[icmptype] == icmp-unreach";
+
+	struct bpf_program fcode;
+	/* Open the adapter */
+	/*lpParameter->device*/
+	if ((adhandle = pcap_open(device->name,  // name of the device
+		65536,     // portion of the packet to capture. 
+		// 65536 grants that the whole packet will be captured on all the MACs.
+		PCAP_OPENFLAG_PROMISCUOUS,         // promiscuous mode
+		1000,      // read timeout
+		NULL,      // remote authentication
+		errbuf     // error buffer
+		)) == NULL)
+	{
+		fprintf(stderr, "\nUnable to open the adapter. %s is not supported by WinPcap\n");
+	}
+
+	/* Check the link layer. We support only Ethernet for simplicity. */
+	if (pcap_datalink(adhandle) != DLT_EN10MB)
+	{
+		fprintf(stderr, "\nThis program works only on Ethernet networks.\n");
+	}
+
+	if (device->addresses != NULL)
+		/* Retrieve the mask of the first address of the interface */
+		netmask = ((struct sockaddr_in *)(device->addresses->netmask))->sin_addr.S_un.S_addr;
+	else
+		/* If the interface is without addresses we suppose to be in a C class network */
+		netmask = 0xffffff;
+
+
+	//compile the filter
+	if (pcap_compile(adhandle, &fcode, packet_filter, 1, netmask) <0)
+	{
+		fprintf(stderr, "\nUnable to compile the packet filter. Check the syntax.\n");
+	}
+
+	//set the filter
+	if (pcap_setfilter(adhandle, &fcode)<0)
+	{
+		fprintf(stderr, "\nError setting the filter.\n");
+	}
+
+	/* start the capture */
+	pcap_loop(adhandle, 0, packet_handler, NULL);
+	return 0;
+}
+
+PingCore(DWORD dwDestIP, PingReply *pPingReply, DWORD dwTimeout)
+{
+	//判断初始化是否成功
+	if (!m_bIsInitSucc)
+	{
+		return FALSE;
+	}
+	//配置SOCKET
+	sockaddr_in sockaddrDest;
+	sockaddrDest.sin_family = AF_INET;
+	sockaddrDest.sin_addr.s_addr = dwDestIP;
+	int nSockaddrDestSize = sizeof(sockaddrDest);
+
+	//构建ICMP包
+	int nICMPDataSize = DEF_PACKET_SIZE + sizeof(ICMPHeader);
+	ULONG ulSendTimestamp = GetTickCountCalibrate();
+	USHORT usSeq = ++s_usPacketSeq;
+	memset(m_szICMPData, 0, nICMPDataSize);
+
+	ICMPHeader *pICMPHeader = (ICMPHeader*)m_szICMPData;
+	pICMPHeader->m_byType = ECHO_REQUEST;
+	pICMPHeader->m_byCode = 0;
+	pICMPHeader->m_usID = m_usCurrentProcID;
+	pICMPHeader->m_usSeq = usSeq;
+	pICMPHeader->m_ulTimeStamp = ulSendTimestamp;
+	pICMPHeader->m_usChecksum = CalCheckSum((USHORT*)m_szICMPData, nICMPDataSize);
+
+	//发送ICMP报文
+	if (sendto(m_sockRaw, m_szICMPData, nICMPDataSize, 0, (struct sockaddr*)&sockaddrDest, nSockaddrDestSize) == SOCKET_ERROR)
+	{
+		return FALSE;
+	}
+	char* some;
+	some = inet_ntoa(sockaddrDest.sin_addr);
+	//map<int, int>::iterator tempMap;
+	if (hostScanStatus.find(some) == hostScanStatus.end())
+	{
+		hostScanStatus[some] = 1;
+	}
+	else
+	{
+		hostScanStatus[some]++;
+	}
+	//hostScanStatus[some] = 
+	//判断是否需要接收相应报文
+	if (pPingReply == NULL)
+	{
+		return TRUE;
+	}
+
+	char recvbuf[256] = { "\0" };
+	while (TRUE)
+	{
+		//接收响应报文
+		if (WSAWaitForMultipleEvents(1, &m_event, FALSE, 100, FALSE) != WSA_WAIT_TIMEOUT)
+		{
+			WSANETWORKEVENTS netEvent;
+			WSAEnumNetworkEvents(m_sockRaw, m_event, &netEvent);
+
+			if (netEvent.lNetworkEvents & FD_READ)
+			{
+				ULONG nRecvTimestamp = GetTickCountCalibrate();
+				int nPacketSize = recvfrom(m_sockRaw, recvbuf, 256, 0, (struct sockaddr*)&sockaddrDest, &nSockaddrDestSize);
+				if (nPacketSize != SOCKET_ERROR)
+				{
+					IPHeader *pIPHeader = (IPHeader*)recvbuf;
+					USHORT usIPHeaderLen = (USHORT)((pIPHeader->m_byVerHLen & 0x0f) * 4);
+					ICMPHeader *pICMPHeader = (ICMPHeader*)(recvbuf + usIPHeaderLen);
+
+					if (pICMPHeader->m_usID == m_usCurrentProcID //是当前进程发出的报文
+						&& pICMPHeader->m_byType == ECHO_REPLY //是ICMP响应报文
+						&& pICMPHeader->m_usSeq == usSeq //是本次请求报文的响应报文
+						)
+					{
+						existHostMap[some] = 1;
+						cout << some << "	ping success!" << endl;
+						pPingReply->m_usSeq = usSeq;
+						pPingReply->m_dwRoundTripTime = nRecvTimestamp - pICMPHeader->m_ulTimeStamp;
+						pPingReply->m_dwBytes = nPacketSize - usIPHeaderLen - sizeof(ICMPHeader);
+						pPingReply->m_dwTTL = pIPHeader->m_byTTL;
+						return TRUE;
+					}
+				}
+			}
+		}
+		//超时
+		if (GetTickCountCalibrate() - ulSendTimestamp >= dwTimeout)
+		{
+			cout << some << "	timeout" << endl;
+			return FALSE;
+		}
+	}
+}
+
+bool getMAC(char* SrcIpString, char* DestIpString)
+{
+	DWORD dwRetVal;
+	IPAddr SrcIp = inet_addr(SrcIpString);
+	IPAddr DestIp = inet_addr(DestIpString);
+    //ULONG MacAddr[2];       /* for 6-byte hardware addresses */
+	ULONG PhysAddrLen = 6;  /* default to length of six bytes */
+
+	BYTE *bPhysAddr;
+	unsigned int i;
+	memset(&MacAddr, 0xff, sizeof (MacAddr));
+
+	printf("根据ARP协议获取主机MAC地址: %s\n", DestIpString);
+
+	dwRetVal = SendARP(DestIp, SrcIp, &MacAddr, &PhysAddrLen);
+	//cout << MacAddr << endl;
+
+	//cout << PhysAddrLen << endl;
+	if (dwRetVal == NO_ERROR) {
+		cout << "主机MAC地址为：";
+		bPhysAddr = (BYTE *) &MacAddr;
+		//cout <<"bphysAddr:"<< bPhysAddr << endl;
+		if (PhysAddrLen) {
+			for (i = 0; i < (int)PhysAddrLen; i++) {
+				if (i == (PhysAddrLen - 1))
+					printf("%.2X\n", (int)bPhysAddr[i]);
+				else
+					printf("%.2X-", (int)bPhysAddr[i]);
+			}
+		}
+		else
+			printf
+			("Warning: SendArp completed successfully, but returned length=0\n");
+		return TRUE;
+
+	}
+	else {
+		printf("Error: SendArp failed with error: %d", dwRetVal);
+		switch (dwRetVal) {
+		case ERROR_GEN_FAILURE:
+			printf(" (ERROR_GEN_FAILURE)\n");
+			break;
+		case ERROR_INVALID_PARAMETER:
+			printf(" (ERROR_INVALID_PARAMETER)\n");
+			break;
+		case ERROR_INVALID_USER_BUFFER:
+			printf(" (ERROR_INVALID_USER_BUFFER)\n");
+			break;
+		case ERROR_BAD_NET_NAME:
+			printf(" (ERROR_GEN_FAILURE)\n");
+			break;
+		case ERROR_BUFFER_OVERFLOW:
+			printf(" (ERROR_BUFFER_OVERFLOW)\n");
+			break;
+		case ERROR_NOT_FOUND:
+			printf(" (ERROR_NOT_FOUND)\n");
+			break;
+		default:
+			printf("\n");
+			break;
+		}
+		return FALSE;
+	}
+}
+
+void RawPacket::CreatePacket
+(unsigned char* SourceMAC,
+unsigned char* DestinationMAC,
+unsigned int   SourceIP,
+unsigned int   DestIP,
+unsigned short SourcePort,
+unsigned short DestinationPort,
+unsigned char* UserData,
+unsigned int   UserDataLen)
+{
+	RawPacket::UserDataLen = UserDataLen;
+	FinalPacket = new unsigned char[UserDataLen + 42]; // Reserve enough memory for the length of the data plus 42 bytes of headers 
+	USHORT TotalLen = UserDataLen + 20 + 8; // IP Header uses length of data plus length of ip header (usually 20 bytes) plus lenght of udp header (usually 8)
+
+
+	//Beginning of Ethernet II Header
+	memcpy((void*)FinalPacket, (void*)DestinationMAC, 6);
+	memcpy((void*)(FinalPacket + 6), (void*)SourceMAC, 6);
+	USHORT TmpType = 8;
+	//USHORT TmpType = 0x8864;
+	memcpy((void*)(FinalPacket + 12), (void*)&TmpType, 2); //The type of protocol used. (USHORT) Type 0x08 is UDP. You can change this for other protocols (e.g. TCP)
+
+
+	// Beginning of IP Header
+	memcpy((void*)(FinalPacket + 14), (void*)"\x45", 1); //The Version (4) in the first 3 bits  and the header length on the last 5. (Im not sure, if someone could correct me plz do)
+	//If you wanna do any IPv6 stuff, you will need to change this. but i still don't know how to do ipv6 myself =s 
+	memcpy((void*)(FinalPacket + 15), (void*)"\x00", 1); //Differntiated services field. Usually 0 
+	TmpType = htons(TotalLen);
+	memcpy((void*)(FinalPacket + 16), (void*)&TmpType, 2);
+	TmpType = htons(0x1337);
+	memcpy((void*)(FinalPacket + 18), (void*)&TmpType, 2);// Identification. Usually not needed to be anything specific, esp in udp. 2 bytes (Here it is 0x1337
+	memcpy((void*)(FinalPacket + 20), (void*)"\x00", 1); // Flags. These are not usually used in UDP either, more used in TCP for fragmentation and syn acks i think 
+	memcpy((void*)(FinalPacket + 21), (void*)"\x00", 1); // Offset
+	memcpy((void*)(FinalPacket + 22), (void*)"\x80", 1); // Time to live. Determines the amount of time the packet can spend trying to get to the other computer. (I see 128 used often for this)
+	memcpy((void*)(FinalPacket + 23), (void*)"\x11", 1);// Protocol. UDP is 0x11 (17) TCP is 6 ICMP is 1 etc
+	memcpy((void*)(FinalPacket + 24), (void*)"\x00\x00", 2); //checksum 
+	memcpy((void*)(FinalPacket + 26), (void*)&SourceIP, 4); //inet_addr does htonl() for us
+	memcpy((void*)(FinalPacket + 30), (void*)&DestIP, 4);
+	//Beginning of UDP Header
+	TmpType = htons(SourcePort);
+	memcpy((void*)(FinalPacket + 34), (void*)&TmpType, 2);
+	TmpType = htons(DestinationPort);
+	memcpy((void*)(FinalPacket + 36), (void*)&TmpType, 2);
+	USHORT UDPTotalLen = htons(UserDataLen + 8); // UDP Length does not include length of IP header
+	memcpy((void*)(FinalPacket + 38), (void*)&UDPTotalLen, 2);
+	//memcpy((void*)(FinalPacket+40),(void*)&TmpType,2); //checksum
+	memcpy((void*)(FinalPacket + 42), (void*)UserData, UserDataLen);
+
+	unsigned short UDPChecksum = CalculateUDPChecksum(UserData, UserDataLen, SourceIP, DestIP, htons(SourcePort), htons(DestinationPort), 0x11);
+	memcpy((void*)(FinalPacket + 40), (void*)&UDPChecksum, 2);
+
+	unsigned short IPChecksum = htons(CalculateIPChecksum(TotalLen, 0x1337, SourceIP, DestIP));
+	memcpy((void*)(FinalPacket + 24), (void*)&IPChecksum, 2);
+
+	return;
+
+}
+CalculateIPChecksum
+CalculateUDPChecksum
+
+void RawPacket::SendPacket(pcap_if_t* Device)
+{
+	char Error[256];
+	pcap_t* t;
+	t = pcap_open(Device->name, 65535, PCAP_OPENFLAG_DATATX_UDP, 1, NULL, Error);//FP for send
+	/*pcap_sendpacket(t, FinalPacket, UserDataLen + 42);*/
+	if (pcap_sendpacket(t, FinalPacket, UserDataLen + 42) == 0)
+	{
+		cout << "send success\n";
+	}
+	else
+	{
+		cout << "send error\n";
+	}
+
+	pcap_close(t);
+}
+for (size_t i = 0; i < 1000; i++)
+{
+
+	HANDLE hThread_udpScan = CreateThread(NULL, 0, udpScan, udpScanData, 0, NULL);
+}
